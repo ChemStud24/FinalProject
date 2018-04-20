@@ -24,7 +24,11 @@ import pickle
 
 class LiarsDice(object):
 
-	"""docstring for LiarsDice"""
+	"""docstring for LiarsDice
+
+	State: 3-tuple (my_roll, opponent # of dice, opponent previous bid)
+	Actions: 2-tuple bid
+	"""
 	def __init__(self, num_agents, num_opponents, num_dice):
 		self.num_opponents = num_opponents
 		self.num_dice = num_dice
@@ -36,17 +40,42 @@ class LiarsDice(object):
 
 		self.state = [self.turn, ]
 
+	def done(self):
+		#########################
+		# should rename to reward
+		#########################
+		pass
+
+	def legal_actions(self):
+		pass
 
 	def step(self, action):
 		nxt_state 
+
+	def play(self):
+		pass
+
+	def display(self):
+		pass
+
+	def __str__(self):
+		pass
 		
 class TicTacToe(object):
 
-	"""docstring for TicTacToe"""
+	"""docstring for TicTacToe
+
+	Actions: int
+	[[0, 1, 2],
+	 [3, 4, 5],
+	 [6, 7, 8]]
+	 """
 	def __init__(self, agent, opponent, size = 3):
 		self.size = 3
 		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
 		self.players = random.shuffle([agent,opponent])
+		self.pieces = ['x','o']
+		self.turn = 0
 
 	def done(self):
 		# ROW
@@ -64,26 +93,93 @@ class TicTacToe(object):
 			return True
 		return False
 
-	def legal_actions(self):
-		return [n for n,s in enumerate(flatten(self.board)) if s == '*']
+	def legal_actions(self, board = None):
+		if board == None:
+			board = self.board
+		return [n for n,s in enumerate(flatten(board)) if s == '*']
+
+	def step(self):
+		pass
 
 	def play(self):
 		while True:
 			for player in self.players:
 				action = player.action(self.state, self.legal_actions)
 
-	def display(self):
-		print(self.__str__())
+	def display(self, board = None):
+		if board == None:
+			board = self.board
+		print(self.__str__(), board)
 
-	def __str__(self):
-		return '\n'.join([' '.join(self.board[r]) for r in range(self.size)])
+	def __str__(self, board = None):
+		###############################
+		# add whose move it is to print
+		###############################
+		if board == None:
+			board = self.board
+		return '\n'.join([' '.join(board[r]) for r in range(len(board))])
 
 class Hexapawn(object):
 
-	"""docstring for Hexapawn"""
+	"""docstring for Hexapawn
+
+	Actions: 2-tuple (pawn, direction)
+	0: top-most, left-most pawn ; take left
+	1: middle pawn ; move forward
+	2: bottom-most, right=most pawn ; take right
+	"""
 	def __init__(self, agent, opponent, size = 3):
-		self.size = 3
-		self.board = [['B' for s in range(self.size)],['*' for s in range(self.size)]]
+		self.size = size
+		self.board = [['B' for s in range(self.size)]]
+		for s in range(self.size-2):
+			self.board += [['*' for s in range(self.size)]]
+		self.board += [['W' for s in range(self.size)]]
+		self.players = random.shuffle([agent,opponent])
+		self.pieces = ['W','B']
+		self.turn = 0
+
+	def done(self, board = None):
+		###########################################################################################
+		# this needs to be more nuanced because in some of these black wins while others white wins
+		###########################################################################################
+		if board == None:
+			board = self.board
+		if any(sq == 'W' for sq in board[0]): # white at the end
+			return True
+		if any(sq == 'B' for sq in board[len(board)-1]): # black at the end
+			return True
+		if len(self.legal_actions(board)) == 0: # no legal moves
+			return True
+		if not any(sq == 'W' for sq in flatten(board)): # no white pawns
+			return True
+		if not any(sq == 'B' for sq in flatten(board)): # no black pawns
+			return True
+		return False
+
+	def legal_actions(self):
+		pass
+
+	def step(self):
+		pass
+
+	def play(self):
+		while True:
+			self.step
+			if self.done():
+				breakS
+
+	def display(self, board = None):
+		if board == None:
+			board = self.board
+		print(self.__str__(), board)
+
+	def __str__(self, board = None):
+		###############################
+		# add whose move it is to print
+		###############################
+		if board == None:
+			board = self.board
+		return '\n'.join([' '.join(board[r]) for r in range(len(board))])
 
 def flatten(seqs):
 	return [el for seq in seqs for el in seq]
