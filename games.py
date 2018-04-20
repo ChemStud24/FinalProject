@@ -1,6 +1,6 @@
 import numpy as np
 import random
-
+import pickle
 
 # ========= State Space =========
 # Your dice : M
@@ -45,7 +45,7 @@ class TicTacToe(object):
 	"""docstring for TicTacToe"""
 	def __init__(self, agent, opponent, size = 3):
 		self.size = 3
-		self.board = [['*' for c in range(size)] for r in range(size)]
+		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
 		self.players = random.shuffle([agent,opponent])
 
 	def done(self):
@@ -78,6 +78,13 @@ class TicTacToe(object):
 	def __str__(self):
 		return '\n'.join([' '.join(self.board[r]) for r in range(self.size)])
 
+class Hexapawn(object):
+
+	"""docstring for Hexapawn"""
+	def __init__(self, agent, opponent, size = 3):
+		self.size = 3
+		self.board = [['B' for s in range(self.size)],['*' for s in range(self.size)]]
+
 class RandomAgent(object):
 
 	"""docstring for RandomAgent"""
@@ -91,8 +98,48 @@ class RandomAgent(object):
 	def update(self, state, action, reward):
 		pass
 
+class Learner(object):
+
+	"""docstring for Learner"""
+	def __init__(self, num_states, num_actions, get_action = egreedy):
+		self.Q = [[random.random() for a in num_actions] for s in num_states]
+		self.get_action = get_action
+
+	def action(self, state, legal_actions):
+		return self.get_action()
+
+	def update(self, state, action, reward):
+		pass
+
+	def save(self, filename):
+		d = {'Q' : self.Q, 'get_action' : self.get_action}
+
+
+	def load(self, filename):
+		pass
+
 def flatten(seqs):
 	return [el for seq in seqs for el in seq]
+
+'''def get_softmax(nums):
+	maxx = np.max(nums)
+	return np.exp(nums-maxx)/np.sum(np.exp(nums-maxx))
+
+def softmax(values, percomp = None, epsilon = None):
+	options = np.cumsum(softmax(values))
+	choice = np.random.rand()
+	return next(action for action,value in enumerate(options) if value >= choice)
+
+def egreedy(values, percomp = None, epsilon = 0.05):
+	if np.random.rand() < epsilon:
+		return get_action_uniform(values)
+	return get_action_optimal(values)
+
+def optimal(values, percomp = None, epsilon = None):
+	return np.argmax(values)
+
+def uniform(values, percomp = None, epsilon = None):
+	return np.random.choice(values.shape[0],)'''
 
 
 if __name__ == '__main__':
