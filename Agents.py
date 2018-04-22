@@ -16,18 +16,33 @@ class RandomAgent(object):
 	def update(self, state, action, reward):
 		pass
 
+	def save(self, filename):
+		pass
+
+	def load(self, filename):
+		pass
+
 class Learner(object):
 
+	TREE = 'tree'
+
 	"""docstring for Learner"""
-	def __init__(self, num_states, num_actions, get_action = egreedy):
-		self.Q = [[random.random() for a in num_actions] for s in num_states]
-		self.get_action = get_action
+	def __init__(self, game, playouts = 100):
+		# self.Q = [[random.random() for a in range(num_actions)] for s in range(num_states)]
+		# self.get_action = get_action
+		self.game = game
+		self.playouts = playouts
 
 	def action(self, state, legal_actions):
 		return self.get_action()
 
 	def update(self, state, action, reward):
-		pass
+		Learner.TREE = 'bush'
+
+	def think(self):
+		for p in range(self.playouts):
+			followers = self.game.followers()
+
 
 	def save(self, filename):
 		d = {'Q' : self.Q, 'get_action' : self.get_action}

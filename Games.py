@@ -65,6 +65,10 @@ class TicTacToe(object):
 
 	"""docstring for TicTacToe
 
+	State: 2-tuple
+	(board, piece)
+	where piece is 'x' or 'o'
+
 	Actions: int
 	[[0, 1, 2],
 	 [3, 4, 5],
@@ -76,6 +80,7 @@ class TicTacToe(object):
 		self.players = random.shuffle([agent,opponent])
 		self.pieces = ['x','o']
 		self.turn = 0
+		self.state = (self.board,self.pieces[self.turn])
 
 	def done(self):
 		# ROW
@@ -93,13 +98,21 @@ class TicTacToe(object):
 			return True
 		return False
 
-	def legal_actions(self, board = None):
-		if board == None:
+	def legal_actions(self, state = None):
+		if state = None:
 			board = self.board
+		else:
+			board = state[0]
+		board = state[0]
+		# if board == None:
+		# 	board = self.board
 		return [n for n,s in enumerate(flatten(board)) if s == '*']
 
-	def step(self):
-		pass
+	def step(self, state, action):
+		update = False
+		if state == None:
+			state = self.state
+			update = True
 
 	def play(self):
 		while True:
