@@ -74,6 +74,9 @@ class TicTacToe(object):
 	 [3, 4, 5],
 	 [6, 7, 8]]
 	 """
+
+	 PLAYERS = 2 # number of players
+
 	def __init__(self, agent, opponent, size = 3):
 		self.size = 3
 		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
@@ -82,21 +85,25 @@ class TicTacToe(object):
 		self.turn = 0
 		self.state = (self.board,self.pieces[self.turn])
 
-	def done(self):
+	def reward(self):
+		# DRAW
+		if len(self.legal_actions()) == 0:
+			return 0
 		# ROW
 		if any(all(sq == 'x' for sq in row) or all(sq == 'o' for sq in row) for row in self.board): # row
-			return True
+			return 1
 		# COLUMN
 		if any(all(row[c] == 'x' for row in self.board) or all(row[c] == 'o' for row in self.board) for c in range(self.size)): # column
-			return True
+			return 1
 		# DIAGONAL DOWN RIGHT
 		if all(self.board[n][n] == 'x' for n in range(self.size)) or all(self.board[n][n] == 'o' for n in range(self.size)):
-			return True
+			return 1
 		# DIAGONAL UP RIGHT
 		z = zip(list(range(self.size)),list(range(self.size-1,-1,-1)))
 		if all(self.board[r][c] == 'x' for r,c in z) or all(self.board[r][c] == 'o' for r,c in z):
-			return True
-		return False
+			return 1
+		# NOT DONE
+		return None
 
 	def legal_actions(self, state = None):
 		if state = None:
