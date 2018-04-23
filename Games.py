@@ -67,72 +67,125 @@ class TicTacToe(object):
 
 	"""docstring for TicTacToe
 
-	State: 2-tuple
-	(board, piece)
-	where piece is 'x' or 'o'
+	State: board (as deep tuple)
 
 	Actions: int
 	[[0, 1, 2],
-	 [3, 4, 5],
-	 [6, 7, 8]]
-	 """
-	def __init__(self, agent, opponent, size = 3):
-		self.size = 3
-		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
-		self.players = random.shuffle([agent,opponent])
-		self.pieces = ['x','o']
-		self.turn = 0
-		self.state = (self.board,self.pieces[self.turn])
+	[3, 4, 5],
+	[6, 7, 8]]
+	"""
 
-	def done(self):
+	PLAYERS = 2 # number of players
+
+	def __init__(self, num_players = 2, size = 3):
+		self.size = size
+		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
+		self.players = [0,1]
+		
+		self.turn = random.choice(self.players)
+		
+
+	def initialize(self):
+		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
+		# random.shuffle(self.players)
+		self.turn = random.choice(self.players)
+		return self.board, self.turn 
+
+	def reward(self, board = None):
+		if board == None:
+			board = self.copy_board(self.board)
+
 		# ROW
 		if any(all(sq == 'x' for sq in row) or all(sq == 'o' for sq in row) for row in self.board): # row
-			return True
+			print(1)
+			return 1
 		# COLUMN
 		if any(all(row[c] == 'x' for row in self.board) or all(row[c] == 'o' for row in self.board) for c in range(self.size)): # column
-			return True
+			print(2)
+			return 1
 		# DIAGONAL DOWN RIGHT
 		if all(self.board[n][n] == 'x' for n in range(self.size)) or all(self.board[n][n] == 'o' for n in range(self.size)):
-			return True
+			print(3)
+			return 1
 		# DIAGONAL UP RIGHT
 		z = zip(list(range(self.size)),list(range(self.size-1,-1,-1)))
 		if all(self.board[r][c] == 'x' for r,c in z) or all(self.board[r][c] == 'o' for r,c in z):
-			return True
-		return False
+			print(4)
+			return 1
+				# DRAW
+		if len(self.legal_actions(board)) == 0:
+			return 0
+		# NOT DONE
+		return None
 
-	def legal_actions(self, state = None):
-		if state == None:
-			board = self.board
-		else:
-			board = state[0]
-		board = state[0]
-		# if board == None:
-		# 	board = self.board
+
+	def legal_actions(self, board = None):
+		if board == None:
+			board = self.copy_board(self.board)
 		return [n for n,s in enumerate(flatten(board)) if s == '*']
 
-	def step(self, state, action):
-		update = False
-		if state == None:
-			state = self.state
-			update = True
+	def step(self, board, action):
+		board = self.copy_board(board)
+		if flatten(board).count('x') > flatten(board).count('o'):
+			piece = 'o'
+		else:
+			piece = 'x'
+		board[int(action / self.size)][action % self.size] = piece
+		return self.state(board)
 
 	def play(self):
-		while True:
+		# play through
+		self.reset()
+		reward = None
+		while reward is None:
 			for player in self.players:
-				action = player.action(self.state, self.legal_actions)
+				action = player.action(self.state())
+				self.board = self.step(self.board, action)
+				reward = self.reward()
+				if reward is not None:
+					print(reward)
+					break
+				print(self)
+		# print result
+		if reward > 0:
+			print(player.name + ' wins!')
+			print(self)
+		else:
+			print('Draw!')
+			print(self)
+
+	def get_players(self):
+		return self.players
+
+	def copy_board(self, board = None):
+		if board == None:
+			board = self.board
+		return [[sq for sq in row] for row in board]
+
+	def state(self, board = None):
+		if board == None:
+			board = self.copy_board(self.board)
+		return tuple([tuple(row) for row in board])
+
+	def reset(self):
+		self.board = self.board = [['*' for c in range(self.size)] for r in range(self.size)]
+		# random.shuffle(self.players)
 
 	def display(self, board = None):
 		if board == None:
-			board = self.board
+			board = self.copy_board(self.board)
 		print(self.__str__(), board)
 
 	def __str__(self, board = None):
-		###############################
-		# add whose move it is to print
-		###############################
 		if board == None:
-			board = self.board
-		return '\n'.join([' '.join(board[r]) for r in range(len(board))])
+			board = self.copy_board(self.board)
+		# piece to move
+		if flatten(board).count('x') > flatten(board).count('o'):
+			piece = 'o'
+		else:
+			piece = 'x'
+		# print string
+		return '\n'.join([' '.join(board[r]) for r in range(len(board))]) + '\n\'' + piece + '\' to move.\n\n'
 
 class Hexapawn(object):
 
