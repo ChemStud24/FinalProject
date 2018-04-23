@@ -65,29 +65,27 @@ class TicTacToe(object):
 
 	"""docstring for TicTacToe
 
-	State: 2-tuple
-	(board, piece)
-	where piece is 'x' or 'o'
+	State: board (as deep tuple)
 
 	Actions: int
 	[[0, 1, 2],
-	 [3, 4, 5],
-	 [6, 7, 8]]
-	 """
+	[3, 4, 5],
+	[6, 7, 8]]
+	"""
 
-	 PLAYERS = 2 # number of players
+	PLAYERS = 2 # number of players
 
 	def __init__(self, agent, opponent, size = 3):
-		self.size = 3
+		self.size = size
 		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
-		self.players = random.shuffle([agent,opponent])
-		self.pieces = ['x','o']
-		self.turn = 0
-		self.state = (self.board,self.pieces[self.turn])
+		self.players = [agent(self),opponent(self)]
+		random.shuffle(self.players)
 
-	def reward(self):
+	def reward(self, board = None):
+		if board == None:
+			board = self.copy_board(self.board)
 		# DRAW
-		if len(self.legal_actions()) == 0:
+		if len(self.legal_actions(board)) == 0:
 			return 0
 		# ROW
 		if any(all(sq == 'x' for sq in row) or all(sq == 'o' for sq in row) for row in self.board): # row
@@ -105,39 +103,73 @@ class TicTacToe(object):
 		# NOT DONE
 		return None
 
-	def legal_actions(self, state = None):
-		if state = None:
-			board = self.board
-		else:
-			board = state[0]
-		board = state[0]
-		# if board == None:
-		# 	board = self.board
+	def legal_actions(self, board = None):
+		if board == None:
+			board = self.copy_board(self.board)
 		return [n for n,s in enumerate(flatten(board)) if s == '*']
 
-	def step(self, state, action):
-		update = False
-		if state == None:
-			state = self.state
-			update = True
+	def step(self, board, action):
+		board = self.copy_board(board)
+		if flatten(board).count('x') > flatten(board).count('o'):
+			piece = 'o'
+		else:
+			piece = 'x'
+		board[int(action / self.size)][action % self.size] = piece
+		return self.state(board)
 
 	def play(self):
-		while True:
+		# play through
+		self.reset()
+		reward = None
+		while reward is None:
 			for player in self.players:
-				action = player.action(self.state, self.legal_actions)
+				action = player.action(self.state())
+				self.board = self.step(self.board, action)
+				reward = self.reward()
+				if reward is not None:
+					print(reward)
+					break
+				print(self)
+		# print result
+		if reward > 0:
+			print(player.name + ' wins!')
+			print(self)
+		else:
+			print('Draw!')
+			print(self)
+
+	def get_players(self):
+		return self.players
+
+	def copy_board(self, board = None):
+		if board == None:
+			board = self.board
+		return [[sq for sq in row] for row in board]
+
+	def state(self, board = None):
+		if board == None:
+			board = self.copy_board(self.board)
+		return tuple([tuple(row) for row in board])
+
+	def reset(self):
+		self.board = self.board = [['*' for c in range(self.size)] for r in range(self.size)]
+		random.shuffle(self.players)
 
 	def display(self, board = None):
 		if board == None:
-			board = self.board
+			board = self.copy_board(self.board)
 		print(self.__str__(), board)
 
 	def __str__(self, board = None):
-		###############################
-		# add whose move it is to print
-		###############################
 		if board == None:
-			board = self.board
-		return '\n'.join([' '.join(board[r]) for r in range(len(board))])
+			board = self.copy_board(self.board)
+		# piece to move
+		if flatten(board).count('x') > flatten(board).count('o'):
+			piece = 'o'
+		else:
+			piece = 'x'
+		# print string
+		return '\n'.join([' '.join(board[r]) for r in range(len(board))]) + '\n\'' + piece + '\' to move.\n\n'
 
 class Hexapawn(object):
 
