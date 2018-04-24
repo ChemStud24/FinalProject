@@ -65,6 +65,15 @@ class LiarsDice(object):
 		
 class TicTacToe(object):
 
+	"""
+	Instructions: TicTacToe
+
+	Try to get all of your pieces in a row, column, or diagonal to win.
+	On your turn, make a move by indicating which space you want to put
+	your piece in.  The squares are numbered starting with the top-left
+	square as 0.  'x' moves first.
+	"""
+	
 	"""docstring for TicTacToe
 
 	State: board (as deep tuple)

@@ -42,7 +42,8 @@ class Learner(object):
 	def action(self, state):
 		self.think(state)
 		followers = [(self.game.step(state, a),a) for a in self.game.legal_actions(state)]
-		if any(s2 not in Learner.TREE.keys() for s2,_ in followers):
+		# I changed ANY to ALL so that it only picks a random unexplored action if it has no prior experience in this state
+		if all(s2 not in Learner.TREE.keys() for s2,_ in followers):
 			return random.choice([a for s2,a in followers if s2 not in Learner.TREE.keys()])
 		else:
 			return max((self.minwin(s2),a) for s2,a in followers if s2 in Learner.TREE.keys())[1]
@@ -245,9 +246,17 @@ class Human(object):
 	def __init__(self, game, name = 'Hugh Mann'):
 		self.name = name
 		self.game = game
+		print(self.game.__doc__)
 
 	def action(self, state):
 		print(self.game)
+		legals = {i : a for i,a in enumerate(self.game.legal_actions())}
+		action = None
+		while action not in legals.keys():
+			print('Legal Actions:')
+			print('\n'.join([str(i) + ': ' + str(a) for i,a in legals.items()]))
+			action = int(input('What is your move?\n'))
+		return legals.get(action)
 
 	def save(self, filename):
 		pass
