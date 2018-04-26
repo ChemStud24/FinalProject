@@ -38,9 +38,9 @@ if __name__ == '__main__':
 	EPISODES = 5
 	SIZE = 3
 
-	Carlos = Learner(TicTacToe)
-	players = [Carlos, Minimax(TicTacToe)]
-	game = TicTacToe(players, size = SIZE)
+	Carlos = Learner(HexaPawn)
+	players = [Carlos, RandomAgent(HexaPawn)]
+	game = HexaPawn(players, size = SIZE)
 
 	wins_first, draws_first, losses_first, wins_second, losses_second, draws_second = [],[],[],[],[],[]
 
