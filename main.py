@@ -34,9 +34,9 @@ def plot_results(title,games,statistics,names,xlabel = 'Games Played'):
 
 if __name__ == '__main__':
 
-	GAMES = 100
-	EPISODES = 200
-	SIZE = 3
+	GAMES = 10
+	EPISODES = 20
+	SIZE = 4
 
 	Carlos = Learner(TicTacToe)
 	players = [Carlos, RandomAgent(TicTacToe)]
@@ -72,6 +72,8 @@ if __name__ == '__main__':
 		list(range(GAMES,EPISODES*GAMES+GAMES,GAMES)),
 		[wins_first, draws_first, wins_second, draws_second],
 		['Wins as X', 'Draws as X', 'Wins as O', 'Draws as O'])
+
+	Carlos.save('Carlos.lrn')
 
 
 	# num_games = 50

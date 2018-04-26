@@ -72,6 +72,8 @@ class TicTacToe(object):
 	On your turn, make a move by indicating which space you want to put
 	your piece in.  The squares are numbered starting with the top-left
 	square as 0.  'x' moves first.
+
+	Type 'help' to repeat these instructions.
 	"""
 	
 	"""docstring for TicTacToe
@@ -130,7 +132,7 @@ class TicTacToe(object):
 			# print(3)
 			return 1
 		# DIAGONAL UP RIGHT
-		z = zip(list(range(size)),list(range(size-1,-1,-1)))
+		z = list(zip(list(range(size)),list(range(size-1,-1,-1))))
 		if all(board[r][c] == 'x' for r,c in z) or all(board[r][c] == 'o' for r,c in z):
 			# print(4)
 			return 1
@@ -209,21 +211,32 @@ class TicTacToe(object):
 		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
 		random.shuffle(self.players)
 
-	def display(self, board = None):
-		if board == None:
-			board = self.copy_board(self.board)
-		print(self.__str__(), board)
-
-	def __str__(self, board = None):
-		if board == None:
-			board = TicTacToe.copy_board(self.board)
-		# piece to move
+	def display(board):
+		# if board == None:
+		# 	board = self.copy_board(self.board)
+		# print(self.__str__(), board)
+		board = TicTacToe.copy_board(board)
 		if flatten(board).count('x') > flatten(board).count('o'):
 			piece = 'o'
 		else:
 			piece = 'x'
 		# print string
-		return '\n'.join([' '.join(board[r]) for r in range(len(board))]) + '\n\'' + piece + '\' to move.\n\n'
+		print('\n'.join([' '.join(board[r]) for r in range(len(board))]) + '\n\'' + piece + '\' to move.\n\n')
+
+
+	def __str__(self):
+		# if board == None:
+		# 	board = TicTacToe.copy_board(self.board)
+		# piece to move
+		board = TicTacToe.copy_board(self.board)
+		if flatten(board).count('x') > flatten(board).count('o'):
+			# piece = 'o'
+			player = self.players[1].name
+		else:
+			# piece = 'x'
+			player = self.players[0].name
+		# return string
+		return '\n'.join([' '.join(board[r]) for r in range(len(board))]) + '\n\'' + player + '\' to move.\n\n'
 
 class Hexapawn(object):
 

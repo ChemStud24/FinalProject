@@ -1,0 +1,71 @@
+Episode 3
+* * *
+* * *
+* * *
+'x' to move.
+
+
+Legal Actions:
+0: 0
+1: 1
+2: 2
+3: 3
+4: 4
+5: 5
+6: 6
+7: 7
+8: 8
+What is your move?
+4
+* * o
+* x *
+* * *
+'x' to move.
+
+
+Legal Actions:
+0: 0
+1: 1
+2: 3
+3: 5
+4: 6
+5: 7
+6: 8
+What is your move?
+3
+* * o
+o x x
+* * *
+'x' to move.
+
+
+Legal Actions:
+0: 0
+1: 1
+2: 6
+3: 7
+4: 8
+What is your move?
+4
+o * o
+o x x
+* * x
+'x' to move.
+
+
+Legal Actions:
+0: 1
+1: 6
+2: 7
+What is your move?
+1
+o * o
+o x x
+x o x
+'x' to move.
+
+
+Legal Actions:
+0: 1
+What is your move?
+0
