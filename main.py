@@ -34,15 +34,17 @@ def plot_results(title,games,statistics,names,xlabel = 'Games Played'):
 
 if __name__ == '__main__':
 
-	GAMES = 5
-	EPISODES = 5
+	GAMES = 4
+	EPISODES = 50
 	SIZE = 3
 
-	Carlos = Learner(TicTacToe)
-	players = [Carlos, Minimax(TicTacToe)]
-	game = TicTacToe(players, size = SIZE)
+	Carlos = Learner(HexaPawn, playouts = 5)
+	players = [Carlos, RandomAgent(HexaPawn)]
+	game = HexaPawn(players, size = SIZE)
 
 	wins_first, draws_first, losses_first, wins_second, losses_second, draws_second = [],[],[],[],[],[]
+	wins,losses,draws = [],[],[]
+	playouts = []
 
 	for e in range(EPISODES):
 		# state,turn = game.initialize()
@@ -58,6 +60,11 @@ if __name__ == '__main__':
 		draws_second.append(Carlos.draws_second)
 		losses_second.append(Carlos.losses_second)
 
+		wins.append(wins_first[-1] + wins_second[-1])
+		losses.append(losses_first[-1] + losses_second[-1])
+		draws.append(draws_first[-1] + draws_second[-1])
+		playouts.append(Carlos.PLAYS)
+
 		print('\nProgress:')
 		print('Playouts:',Carlos.PLAYS)
 		print('States Visited:',sum(Carlos.TREE.get(s)[1] for s in Carlos.TREE.keys()))
@@ -68,12 +75,16 @@ if __name__ == '__main__':
 		print('Losses:',losses_first[-1] + losses_second[-1])
 		print('Draws:',draws_first[-1] + draws_second[-1])
 
-	plot_results('Monte Carlo vs. Minimax',
-		list(range(GAMES,EPISODES*GAMES+GAMES,GAMES)),
-		[wins_first, draws_first, wins_second, draws_second],
-		['Wins as X', 'Draws as X', 'Wins as O', 'Draws as O'])
+	plot_results('Monte Carlo vs. Random Agent',
+		# list(range(GAMES,EPISODES*GAMES+GAMES,GAMES)),
+		playouts,
+		# [wins_first, draws_first, wins_second, draws_second],
+		# ['Wins as X', 'Draws as X', 'Wins as O', 'Draws as O'],
+		[wins,draws,losses],
+		['Wins','Draws','Losses'],
+		xlabel='Self-Playouts')
 
-	Carlos.save('Carlos.lrn')
+	Carlos.save('SlowCarlos.lrn')
 
 
 	# num_games = 50
