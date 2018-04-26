@@ -169,11 +169,8 @@ class TicTacToe(object):
 					self.board = TicTacToe.step(self.board, action)
 					reward = TicTacToe.reward(self.board)
 					if reward is not None:
-						# print(reward)
 						break
-					# print(self)
 
-			# log results
 			if reward > 0:
 				if player is self.players[0]:
 					player.wins_first += 1
@@ -185,17 +182,11 @@ class TicTacToe(object):
 					for p in self.players:
 						if p is not player:
 							p.losses_first += 1
-				# print(player.name + ' wins!')
-				# print(self)
 			else:
 				self.players[0].draws_first += 1
 				for p in self.players[1:]:
 					p.draws_second += 1
-				# print('Draw!')
-				# print(self)
 
-	# def get_players(self):
-	# 	return self.players
 
 	def copy_board(board):
 		# if board == None:
@@ -238,7 +229,15 @@ class TicTacToe(object):
 		# return string
 		return '\n'.join([' '.join(board[r]) for r in range(len(board))]) + '\n\'' + player + '\' to move.\n\n'
 
-class Hexapawn(object):
+# class Game(object):
+# 	"""docstring for Game"""
+# 	def __init__(self, arg):
+# 		pass
+
+# 	def play(self):
+# 		pass
+		
+class HexaPawn(object):
 
 	"""docstring for Hexapawn
 
@@ -247,46 +246,135 @@ class Hexapawn(object):
 	1: middle pawn ; move forward
 	2: bottom-most, right=most pawn ; take right
 	"""
-	def __init__(self, agent, opponent, size = 3):
+	PLAYERS = 2 # number of players
+	def __init__(self, players, size = 3):
 		self.size = size
+		# self.board = [['*' for c in range(self.size)] for r in range(self.size)]
+		# self.players = [0,1]
+		# self.turn = random.choice(self.players)
+		self.players = players
+
+		# results for this game
+		for player in self.players:
+			player.wins_first = 0
+			player.wins_second = 0
+			player.losses_first = 0
+			player.losses_second = 0
+			player.draws_first = 0
+			player.draws_second = 0
+
+		self.reset()
+
+		# self.players = random.shuffle([agent,opponent])
+
+	def reward(self, board):
+		###########################################################################################
+		# this needs to be more nuanced because in some of these black wins while others white wins
+		###########################################################################################
+		board = TicTacToe.copy_board(board)
+		size = len(board[0])
+		if board == None:
+			board = self.board
+		if any(sq == 'W' for sq in board[0]): # white at the end
+			return 1
+		if any(sq == 'B' for sq in board[len(board)-1]): # black at the end
+			return 1
+		if len(self.legal_actions(board)) == 0: # no legal moves
+			return 1
+		if not any(sq == 'W' for sq in flatten(board)): # no white pawns
+			return 1
+		if not any(sq == 'B' for sq in flatten(board)): # no black pawns
+			return 1
+		return 0
+
+	def legal_actions(board, piece):
+		board = HexaPawn.copy_board(board)
+		free_spaces = [n for n,s in enumerate(flatten(board)) if s == '*']
+		black_pieces = [n for n,s in enumerate(flatten(board)) if s == 'B']
+		white_pieces = [n for n,s in enumerate(flatten(board)) if s == 'W']
+		size = len(board[0])
+		if piece == 'B': 
+			black_forward = [a for a in free_spaces if any(np.array(black_pieces) + size == a)] 
+			black_forward_piece = np.concatenate([list(np.where(np.array(black_pieces) + size == a)[0]) for a in free_spaces]).astype(int)
+
+			black_take_right = [a for a in white_pieces if any(np.array(black_pieces) + size + 1 == a) and a % size != 0] 
+			black_right_piece = np.concatenate([list(np.where(np.array(black_pieces) + size + 1 == a )[0]) for a in white_pieces if a % size != 0]).astype(int)
+
+			black_take_left = [a for a in white_pieces if any(np.array(black_pieces) + size - 1 == a) and a % size != size-1]
+			black_left_piece = np.concatenate([list(np.where(np.array(black_pieces) + size - 1 == a )[0]) for a in white_pieces if a % size != size-1]).astype(int)
+
+			forward = list(zip(black_forward_piece,black_forward))
+			right = list(zip(black_right_piece,black_take_right))
+			left = list(zip(black_left_piece,black_take_left))
+			return np.concatenate((forward, right, left))
+
+
+		else:
+			white_forward = [a for a in free_spaces if any(np.array(white_pieces) - size == a)] 
+			white_forward_piece = np.concatenate([list(np.where(np.array(white_pieces) + size == a)[0]) for a in free_spaces]).astype(int)
+
+			white_take_right = [a for a in black_pieces if any(np.array(white_pieces) - size + 1 == a) and a % size != 0] 
+			white_right_piece = np.concatenate([list(np.where(np.array(white_pieces) - size + 1 == a )[0]) for a in black_pieces if a % size != 0]).astype(int)
+
+			white_take_left = [a for a in black_pieces if any(np.array(white_pieces) - size - 1 == a) and a % size != size-1] 
+			white_left_piece = np.concatenate([list(np.where(np.array(white_pieces) - size - 1 == a )[0]) for a in black_pieces if a % size != size-1]).astype(int)
+
+			forward = list(zip(white_forward_piece,white_forward))
+			right = list(zip(white_right_piece,white_take_right))
+			left = list(zip(white_left_piece,white_take_left))
+
+			return np.concatenate((forward, right, left))
+	
+	def copy_board(board):
+		return [[sq for sq in row] for row in board]
+
+	def step(board, action, piece):
+		board = HexaPawn.copy_board(board)
+		size = len(board[0])
+		board[int(action[0] / size)][action[0] % size] = '*'
+		board[int(action[1] / size)][action[1] % size] = piece
+
+		return HexaPawn.state(board)
+
+	def play(self, games = 1):
+		for g in range(games):
+			self.reset()
+			reward = None
+			while reward is None:
+				for player in self.players:
+					action = player.action(HexaPawn.state(self.board))
+					self.board = HexaPawn.step(self.board, action)
+					reward = HexaPawn.reward(self.board)
+					if reward is not None:
+						break
+
+			if reward > 0:
+				if player is self.players[0]:
+					player.wins_first += 1
+					for p in self.players:
+						if p is not player:
+							p.losses_second += 1
+				else:
+					player.wins_second += 1
+					for p in self.players:
+						if p is not player:
+							p.losses_first += 1
+			else:
+				self.players[0].draws_first += 1
+				for p in self.players[1:]:
+					p.draws_second += 1
+
+	def state(board):
+		# if board == None:
+		# 	board = TicTacToe.copy_board(board)
+		return tuple([tuple(row) for row in HexaPawn.copy_board(board)])
+
+	def reset(self):
 		self.board = [['B' for s in range(self.size)]]
 		for s in range(self.size-2):
 			self.board += [['*' for s in range(self.size)]]
 		self.board += [['W' for s in range(self.size)]]
-		self.players = random.shuffle([agent,opponent])
-		self.pieces = ['W','B']
-		self.turn = 0
-
-	def done(self, board = None):
-		###########################################################################################
-		# this needs to be more nuanced because in some of these black wins while others white wins
-		###########################################################################################
-		if board == None:
-			board = self.board
-		if any(sq == 'W' for sq in board[0]): # white at the end
-			return True
-		if any(sq == 'B' for sq in board[len(board)-1]): # black at the end
-			return True
-		if len(self.legal_actions(board)) == 0: # no legal moves
-			return True
-		if not any(sq == 'W' for sq in flatten(board)): # no white pawns
-			return True
-		if not any(sq == 'B' for sq in flatten(board)): # no black pawns
-			return True
-		return False
-
-	def legal_actions(self):
-
-		pass
-
-	def step(self):
-		pass
-
-	def play(self):
-		while True:
-			self.step
-			if self.done():
-				breakS
+		random.shuffle(self.players)
 
 		
 
@@ -298,159 +386,6 @@ class Hexapawn(object):
 			board = self.board
 		return '\n'.join([' '.join(board[r]) for r in range(len(board))])
 
-
-class HexPawn2(object):
-	"""docstring for Hexapawn2
-
-	Actions: 2-tuple (pawn, direction)
-	0: top-most, left-most pawn ; take left
-	1: middle pawn ; move forward
-	2: bottom-most, right=most pawn ; take right
-	"""
-	def __init__(self, agent, opponent, size = 3):
-		self.size = size
-		self.board = [[1 for s in range(self.size)]]
-		for s in range(self.size-2):
-			self.board += [[0 for s in range(self.size)]]
-		self.board += [[2 for s in range(self.size)]]
-		self.players = random.shuffle([agent,opponent])
-		self.pieces = [1, 2]
-
-		self.pawn_locations = [[(0, i) for i in range(size)], [(size-1, j) for j in range(size)]]
-		self.turn = 0
-
-	
-
-
-	def step(self, state, action):
-		self.turn = (self.turn + 1) % len(self.players)
-		return self.board
-
-	def legal_actions(self, state): # add quit?
-		if state == None:
-			state = self.board
-		valid_actions = []
-
-		for p in range(self.size):
-			pos = self.pawn_locations[self.turn][p]
-			print(pos)
-			new_pos = [-1,-1]
-			if self.turn == 0:
-				# Move forward
-				new_pos[0] = pos[0] + 1
-				new_pos[1] = pos[1]
-				if new_pos[0] < self.size:
-					if self.board[new_pos[0]][new_pos[1]] == 0:
-						valid_actions.append((p, 1))
-
-				# Take left
-				new_pos[0] = pos[0] + 1
-				new_pos[1] = pos[1] - 1
-				print(new_pos)
-				if new_pos[0] < self.size and new_pos[1] <= 0:
-					if self.board[new_pos[0]][new_pos[1]] == self.pieces[(self.turn+1) % 2]:
-						valid_actions.append((p, 0))
-
-				# Take right
-				# Take left
-				new_pos[0] = pos[0] + 1
-				new_pos[1] = pos[1] + 1
-				if new_pos[0] < self.size and new_pos[1] < self.size:
-					if self.board[new_pos[0]][new_pos[1]] == self.pieces[(self.turn+1) % 2]:
-						valid_actions.append((p, 2))
-			else:
-				# Move forward
-				new_pos[0] = pos[0] - 1
-				new_pos[1] = pos[1]
-				if new_pos[0] <= 0:
-					if self.board[new_pos[0]][new_pos[1]] == 0:
-						valid_actions.append((p, 1))
-
-				# Take left
-				new_pos[0] = pos[0] - 1
-				new_pos[1] = pos[1] + 1
-				if new_pos[0] <= 0 and new_pos[1] <  self.size:
-					if self.board[new_pos[0]][new_pos[1]] == self.pieces[(self.turn+1) % 2]:
-						valid_actions.append((p, 2))
-
-				# Take right
-				# Take left
-				new_pos[0] = pos[0] - 1
-				new_pos[1] = pos[1] - 1
-				if new_pos[0] <= 0 and new_pos[1] <= 0:
-					if self.board[new_pos[0]][new_pos[1]] == self.pieces[(self.turn+1) % 2]:
-						valid_actions.append((p, 1))
-		return valid_actions
-
-	def current_player(self, state):
-		return self.turn
-
-	def winner(self, state):
-		black_win = 0
-		white_win = 0
-		if not any(sq == 1 for sq in flatten(board)): # no white pawns
-			black_win = 1
-		if not any(sq == 2 for sq in flatten(board)): # no black pawns
-			white_win = 1
-		if any(sq == 1 for sq in board[0]): # white at the end
-			white_win = 1
-		if any(sq == 1 for sq in board[0]): # white at the end
-			black_win = 1
-		if white_win and black_win:
-			return 0
-		elif white_win:
-			return 1
-		elif black_win:
-			return 2 
-		if len(self.legal_actions(board)) == 0: # no legal moves
-			return 0
-
-
-
-		
-
-	def done(self, board = None):
-		###########################################################################################
-		# this needs to be more nuanced because in some of these black wins while others white wins
-		###########################################################################################
-		if board == None:
-			board = self.board
-		if any(sq == 1 for sq in board[0]): # white at the end
-			return True
-		if any(sq == -2 for sq in board[len(board)-1]): # black at the end
-			return True
-		if len(self.legal_actions(board)) == 0: # no legal moves
-			return True
-		if not any(sq == 1 for sq in flatten(board)): # no white pawns
-			return True
-		if not any(sq == -1 for sq in flatten(board)): # no black pawns
-			return True
-		return False
-
-	
-	def display(self, board = None):
-		if board == None:
-			board = self.board
-		print(board)
-
-		fig = plt.figure(figsize=(6, 3.2))
-		ax = fig.add_subplot(111)
-		ax.set_title('colorMap')
-		plt.imshow(self.board, cmap='gray')
-		ax.set_aspect('equal')
-
-		ax.get_xaxis().set_visible(False)
-		ax.get_yaxis().set_visible(False)
-		plt.colorbar(orientation='vertical')
-		plt.show()
-
-	def __str__(self, board = None):
-		###############################
-		# add whose move it is to print
-		###############################
-		if board == None:
-			board = self.board
-		return '\n'.join([' '.join(board[r]) for r in range(len(board))])
 
 
 def flatten(seqs):
