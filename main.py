@@ -34,12 +34,12 @@ def plot_results(title,games,statistics,names,xlabel = 'Games Played'):
 
 if __name__ == '__main__':
 
-	GAMES = 10
-	EPISODES = 20
-	SIZE = 4
+	GAMES = 5
+	EPISODES = 5
+	SIZE = 3
 
 	Carlos = Learner(TicTacToe)
-	players = [Carlos, RandomAgent(TicTacToe)]
+	players = [Carlos, Minimax(TicTacToe)]
 	game = TicTacToe(players, size = SIZE)
 
 	wins_first, draws_first, losses_first, wins_second, losses_second, draws_second = [],[],[],[],[],[]
@@ -68,7 +68,7 @@ if __name__ == '__main__':
 		print('Losses:',losses_first[-1] + losses_second[-1])
 		print('Draws:',draws_first[-1] + draws_second[-1])
 
-	plot_results('Monte Carlo vs. Random Agent',
+	plot_results('Monte Carlo vs. Minimax',
 		list(range(GAMES,EPISODES*GAMES+GAMES,GAMES)),
 		[wins_first, draws_first, wins_second, draws_second],
 		['Wins as X', 'Draws as X', 'Wins as O', 'Draws as O'])
