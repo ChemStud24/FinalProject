@@ -276,96 +276,51 @@ class Minimax(object):
 	def __init__(self, game, name = 'Max Minnie'):
 		self.name = name
 		self.game = game
-		# self.board = [b[:] for b in board]
-		# self.rows = len(self.board)
-		# self.cols = len(self.board[0])
-
-	# def get_board(self):
-	#     return self.board
-
-	# def reset(self):
-	#     self.board = [b[:] for b in [[False]*self.cols]*self.rows]
-
-	# def is_legal_move(self, row, col, vertical):
-	#     if vertical:
-	#         if row + 1 < self.rows and col < self.cols:
-	#             if row >= 0 and col >= 0:
-	#                 return (not self.board[row][col]) & (not self.board[row+1][col])
-	#         return False
-	#     else:
-	#         if row < self.rows and col + 1 < self.cols:
-	#             if row >= 0 and col >= 0:
-	#                 return (not self.board[row][col]) & (not self.board[row][col+1])
-	#         return False
-
-	# def legal_moves(self, vertical):
-	#     return ((r,c) for r in xrange(self.rows) for c in xrange(self.cols) if self.is_legal_move(r,c,vertical))  ############## XRANGE
-
-	# def perform_move(self, row, col, vertical):
-	#     if self.is_legal_move(row,col,vertical):
-	#         self.board[row][col] = True
-	#         if vertical:
-	#             self.board[row+1][col] = True
-	#         else:
-	#             self.board[row][col+1] = True
-	#         return self
-
-	# def game_over(self, vertical):
-	#     return len(list(self.legal_moves(vertical))) == 0
-
-	# def copy(self):
-	#     return DominoesGame([b[:] for b in self.board])
-
-	# def successors(self, vertical):
-	#     return (((r,c),self.copy().perform_move(r,c,vertical)) for (r,c) in self.legal_moves(vertical))
-
-	# def get_random_move(self, vertical):
-	#     return random.choice(list(self.legal_moves(vertical)))
 
 	# Required
-	def get_best_move(state, limit = float('inf')):
+	def action(self, state, limit = float('inf')):
 		alpha = -float('inf')
 		beta = float('inf')
-		return self.max_value(state,limit,alpha,beta)
+		return self.max_value(state,limit,alpha,beta)[0]
+		# a = self.max_value(state,limit,alpha,beta)
+		# print('Action:',a)
+		# return a[0]
 
 	def max_value(self,state,limit,alpha,beta):
-		# if limit == 0 or self.game_over(vertical):
-		#     return ((),self.utility(vertical),1)
+		reward = self.game.reward(state)
+		if reward is not None:
+			return ((),-reward,1)
 		v = -float('inf')
 		count = 0
-		followers = [(self.game.step(s, a),a) for a in self.game.legal_actions(s)]
+		followers = [(self.game.step(state, a),a) for a in self.game.legal_actions(state)]
 		for s,a in followers:
-			(_,new_v,new_count) = s.min_value(not vertical,limit-1,alpha,beta)
+			(_,new_v,new_count) = self.min_value(s,limit-1,alpha,beta)
 			count += new_count
 			if new_v > v:
 				v = new_v
 				if v >= beta:
 					return ((),v,count)
-					alpha = max(alpha,v)
-					action = a
-					return (action,v,count)
+				alpha = max(alpha,v)
+				action = a
+		return (action,v,count)
 
-	def min_value(self,vertical,limit,alpha,beta):
-		# print('MIN')
-		# print('Limit?',limit,limit == 0)
-		# print('Game Over?',self.game_over(vertical))
-		# print('Limit or Game Over?',limit == 0 | self.game_over(vertical))
-		if limit == 0 or self.game_over(vertical):
-			return ((),self.utility(not vertical),1)
+	def min_value(self,state,limit,alpha,beta):
+		reward = self.game.reward(state)
+		if reward is not None:
+			return ((),reward,1)
 		v = float('inf')
 		count = 0
-		# print('# Successors:',len(list(self.successors(vertical))))
-		for a,s in self.successors(vertical):
-			(_,new_v,new_count) = s.max_value(not vertical,limit-1,alpha,beta)
+		followers = [(self.game.step(state, a),a) for a in self.game.legal_actions(state)]
+		for s,a in followers:
+			(_,new_v,new_count) = self.max_value(s,limit-1,alpha,beta)
 			count += new_count
 			if new_v < v:
 				v = new_v
 				if v <= alpha:
 					return ((),v,count)
-					beta = min(beta,v)
-					action = a
-					return (action,v,count)
-		# v = min(v,max_value(not vertical,limit-1,alpha,beta))
+				beta = min(beta,v)
+				action = a
+		return (action,v,count)
 
-	def utility(self,vertical):
-		return len(list(self.legal_moves(vertical))) - len(list(self.legal_moves(not vertical)))
+	# def utility(self,vertical):
+	# 	return len(list(self.legal_moves(vertical))) - len(list(self.legal_moves(not vertical)))
