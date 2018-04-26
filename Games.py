@@ -267,70 +267,119 @@ class HexaPawn(object):
 
 		# self.players = random.shuffle([agent,opponent])
 
-	def reward(self, board):
+	def reward(board):
 		###########################################################################################
 		# this needs to be more nuanced because in some of these black wins while others white wins
 		###########################################################################################
-		board = TicTacToe.copy_board(board)
+		board = HexaPawn.copy_board(board)
 		size = len(board[0])
-		if board == None:
-			board = self.board
 		if any(sq == 'W' for sq in board[0]): # white at the end
 			return 1
 		if any(sq == 'B' for sq in board[len(board)-1]): # black at the end
 			return 1
-		if len(self.legal_actions(board)) == 0: # no legal moves
+		if len(HexaPawn.legal_actions(board)) == 0: # no legal moves
 			return 1
 		if not any(sq == 'W' for sq in flatten(board)): # no white pawns
 			return 1
 		if not any(sq == 'B' for sq in flatten(board)): # no black pawns
 			return 1
-		return 0
+		return None
 
-	def legal_actions(board, piece):
+	def determine_turn(board):
+		size = len(board)
+		x = np.linspace(0, size-1, size)
+		y = np.linspace(0, size-1, size)
+		_, black_energy = np.meshgrid(x, y)
+
+		x = np.linspace(size-1, 0, size)
+		y = np.linspace(size-1, 0, size)
+		_, white_energy = np.meshgrid(x, y)
+
+		black_energy = flatten(black_energy)
+		white_energy = flatten(white_energy)
+
+
+		black_tot = sum([black_energy[n] for n,s in enumerate(flatten(board)) if s == 'B'])
+		white_tot = sum([white_energy[n] for n,s in enumerate(flatten(board)) if s == 'W'])
+		black_pieces = [n for n,s in enumerate(flatten(board)) if s == 'B']
+		white_pieces = [n for n,s in enumerate(flatten(board)) if s == 'W']
+		if len(white_pieces) == 0:
+			return 'W'
+		if len(black_pieces) == 0:
+			return 'B'
+		if white_tot/len(white_pieces) > black_tot/len(black_pieces):
+			return 'B'
+		else:
+			return 'W'
+
+	def legal_actions(board):
 		board = HexaPawn.copy_board(board)
+		cur_piece = HexaPawn.determine_turn(board)
 		free_spaces = [n for n,s in enumerate(flatten(board)) if s == '*']
 		black_pieces = [n for n,s in enumerate(flatten(board)) if s == 'B']
 		white_pieces = [n for n,s in enumerate(flatten(board)) if s == 'W']
 		size = len(board[0])
-		if piece == 'B': 
-			black_forward = [a for a in free_spaces if any(np.array(black_pieces) + size == a)] 
-			black_forward_piece = np.concatenate([list(np.where(np.array(black_pieces) + size == a)[0]) for a in free_spaces]).astype(int)
+		if cur_piece == 'B': 
+			play_forward = [a for a in free_spaces if any(np.array(black_pieces) + size == a)] 
+			black_forward_piece = [list(np.array(black_pieces)[np.array(black_pieces) + size == a]) for a in free_spaces]
 
-			black_take_right = [a for a in white_pieces if any(np.array(black_pieces) + size + 1 == a) and a % size != 0] 
-			black_right_piece = np.concatenate([list(np.where(np.array(black_pieces) + size + 1 == a )[0]) for a in white_pieces if a % size != 0]).astype(int)
+			forward_pieces = []
+			for p in black_forward_piece:
+				forward_pieces += p
 
-			black_take_left = [a for a in white_pieces if any(np.array(black_pieces) + size - 1 == a) and a % size != size-1]
-			black_left_piece = np.concatenate([list(np.where(np.array(black_pieces) + size - 1 == a )[0]) for a in white_pieces if a % size != size-1]).astype(int)
+			take_right = [a for a in white_pieces if any(np.array(black_pieces) + size + 1 == a) and a % size != 0] 
+			black_right_piece = [list(np.array(black_pieces)[np.array(black_pieces) + size + 1 == a ]) for a in white_pieces if a % size != 0]
+			
+			right_pieces = []
+			for p in black_right_piece:
+				right_pieces += p
 
-			forward = list(zip(black_forward_piece,black_forward))
-			right = list(zip(black_right_piece,black_take_right))
-			left = list(zip(black_left_piece,black_take_left))
-			return np.concatenate((forward, right, left))
+			take_left = [a for a in white_pieces if any(np.array(black_pieces) + size - 1 == a) and a % size != size-1]
+			black_left_piece = [list(np.array(black_pieces)[np.array(black_pieces) + size - 1 == a ]) for a in white_pieces if a % size != size-1]
+			
+			left_pieces = []
+			for p in black_left_piece:
+				left_pieces += p
+
+			
 
 
 		else:
-			white_forward = [a for a in free_spaces if any(np.array(white_pieces) - size == a)] 
-			white_forward_piece = np.concatenate([list(np.where(np.array(white_pieces) + size == a)[0]) for a in free_spaces]).astype(int)
 
-			white_take_right = [a for a in black_pieces if any(np.array(white_pieces) - size + 1 == a) and a % size != 0] 
-			white_right_piece = np.concatenate([list(np.where(np.array(white_pieces) - size + 1 == a )[0]) for a in black_pieces if a % size != 0]).astype(int)
+			play_forward = [a for a in free_spaces if any(np.array(white_pieces) - size == a)] 
+			white_forward_piece = [list(np.array(white_pieces)[np.array(white_pieces) - size == a]) for a in free_spaces]
 
-			white_take_left = [a for a in black_pieces if any(np.array(white_pieces) - size - 1 == a) and a % size != size-1] 
-			white_left_piece = np.concatenate([list(np.where(np.array(white_pieces) - size - 1 == a )[0]) for a in black_pieces if a % size != size-1]).astype(int)
+			forward_pieces = []
+			for p in white_forward_piece:
+				forward_pieces += p
 
-			forward = list(zip(white_forward_piece,white_forward))
-			right = list(zip(white_right_piece,white_take_right))
-			left = list(zip(white_left_piece,white_take_left))
+			take_right = [a for a in black_pieces if any(np.array(white_pieces) - size + 1 == a) and a % size != 0] 
+			white_right_piece = [list(np.array(white_pieces)[np.array(white_pieces) - size + 1 == a]) for a in black_pieces if a % size != 0]
 
-			return np.concatenate((forward, right, left))
+			right_pieces = []
+			for p in white_right_piece:
+				right_pieces += p
+
+			take_left = [a for a in black_pieces if any(np.array(white_pieces) - size - 1 == a) and a % size != size-1] 
+			white_left_piece = [list(np.array(white_pieces)[np.array(white_pieces) - size - 1 == a ]) for a in black_pieces if a % size != size-1]
+
+			left_pieces = []
+			for p in white_left_piece:
+				left_pieces += p
+
+		forward = list(zip(forward_pieces,play_forward))
+		right = list(zip(right_pieces,take_right))
+		left = list(zip(left_pieces,take_left))
+
+		return forward + right + left
 	
 	def copy_board(board):
 		return [[sq for sq in row] for row in board]
 
-	def step(board, action, piece):
+	def step(board, action):
 		board = HexaPawn.copy_board(board)
 		size = len(board[0])
+		piece = board[int(action[0] / size)][action[0] % size]
 		board[int(action[0] / size)][action[0] % size] = '*'
 		board[int(action[1] / size)][action[1] % size] = piece
 

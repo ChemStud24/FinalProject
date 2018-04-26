@@ -38,12 +38,12 @@ if __name__ == '__main__':
 	game = HexaPawn(players, size = SIZE)
 
 	print('0 1 2\n3 4 5\n6 7 8\n')
-	board = [['B', 'B', 'B'],
-			 ['*', 'W', '*'],
-			 ['W', '*', 'W']]
-	actions = HexaPawn.legal_actions(board, 'B')
+	board = [['B', '*', '*'],
+			 ['W', 'B', 'B'],
+			 ['*', '*', '*']]
+	actions = HexaPawn.legal_actions(board)
 	print(actions)
-	board = HexaPawn.step(board, actions[1], 'B')
+	# board = HexaPawn.step(board, actions[1], 'B')
 	print(board)
 
 	# Carlos = Learner(HexaPawn)
