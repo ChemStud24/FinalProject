@@ -17,7 +17,7 @@ class RandomAgent(object):
 		self.game = game
 
 	def action(self, state):
-		return random.choice(self.game.legal_actions())
+		return random.choice(self.game.legal_actions(state))
 
 	def update(self, state, action, reward):
 		pass

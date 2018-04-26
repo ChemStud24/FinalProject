@@ -86,99 +86,128 @@ class TicTacToe(object):
 
 	PLAYERS = 2 # number of players
 
-	def __init__(self, num_players = 2, size = 3):
+	def __init__(self, players, size = 3):
 		self.size = size
-		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
-		self.players = [0,1]
-		
-		self.turn = random.choice(self.players)
-		
+		# self.board = [['*' for c in range(self.size)] for r in range(self.size)]
+		# self.players = [0,1]
+		# self.turn = random.choice(self.players)
+		self.players = players
 
+		# results for this game
+		for player in self.players:
+			player.wins_first = 0
+			player.wins_second = 0
+			player.losses_first = 0
+			player.losses_second = 0
+			player.draws_first = 0
+			player.draws_second = 0
+
+		# random.shuffle(self.players)
+		self.reset()
+		
 	def initialize(self):
 		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
 		# random.shuffle(self.players)
 		self.turn = random.choice(self.players)
 		return self.board, self.turn 
 
-	def reward(self, board = None):
-		if board == None:
-			board = self.copy_board(self.board)
+	def reward(board):
+		# if board == None:
+		# 	board = self.copy_board(self.board)\
+		board = TicTacToe.copy_board(board)
+		size = len(board)
 
 		# ROW
-		if any(all(sq == 'x' for sq in row) or all(sq == 'o' for sq in row) for row in self.board): # row
-			print(1)
+		if any(all(sq == 'x' for sq in row) or all(sq == 'o' for sq in row) for row in board): # row
+			# print(1)
 			return 1
 		# COLUMN
-		if any(all(row[c] == 'x' for row in self.board) or all(row[c] == 'o' for row in self.board) for c in range(self.size)): # column
-			print(2)
+		if any(all(row[c] == 'x' for row in board) or all(row[c] == 'o' for row in board) for c in range(size)): # column
+			# print(2)
 			return 1
 		# DIAGONAL DOWN RIGHT
-		if all(self.board[n][n] == 'x' for n in range(self.size)) or all(self.board[n][n] == 'o' for n in range(self.size)):
-			print(3)
+		if all(board[n][n] == 'x' for n in range(size)) or all(board[n][n] == 'o' for n in range(size)):
+			# print(3)
 			return 1
 		# DIAGONAL UP RIGHT
-		z = zip(list(range(self.size)),list(range(self.size-1,-1,-1)))
-		if all(self.board[r][c] == 'x' for r,c in z) or all(self.board[r][c] == 'o' for r,c in z):
-			print(4)
+		z = zip(list(range(size)),list(range(size-1,-1,-1)))
+		if all(board[r][c] == 'x' for r,c in z) or all(board[r][c] == 'o' for r,c in z):
+			# print(4)
 			return 1
 				# DRAW
-		if len(self.legal_actions(board)) == 0:
+		if len(TicTacToe.legal_actions(board)) == 0:
 			return 0
 		# NOT DONE
 		return None
 
-
-	def legal_actions(self, board = None):
-		if board == None:
-			board = self.copy_board(self.board)
+	def legal_actions(board):
+		# if board == None:
+		# 	board = self.copy_board(self.board)
+		board = TicTacToe.copy_board(board)
 		return [n for n,s in enumerate(flatten(board)) if s == '*']
 
-	def step(self, board, action):
-		board = self.copy_board(board)
+	def step(board, action):
+		board = TicTacToe.copy_board(board)
+		size = len(board)
 		if flatten(board).count('x') > flatten(board).count('o'):
 			piece = 'o'
 		else:
 			piece = 'x'
-		board[int(action / self.size)][action % self.size] = piece
-		return self.state(board)
+		board[int(action / size)][action % size] = piece
+		return TicTacToe.state(board)
 
-	def play(self):
-		# play through
-		self.reset()
-		reward = None
-		while reward is None:
-			for player in self.players:
-				action = player.action(self.state())
-				self.board = self.step(self.board, action)
-				reward = self.reward()
-				if reward is not None:
-					print(reward)
-					break
-				print(self)
-		# print result
-		if reward > 0:
-			print(player.name + ' wins!')
-			print(self)
-		else:
-			print('Draw!')
-			print(self)
+	def play(self, games = 1):
+		for g in range(games):
+			# play through
+			self.reset()
+			reward = None
+			while reward is None:
+				for player in self.players:
+					action = player.action(TicTacToe.state(self.board))
+					self.board = TicTacToe.step(self.board, action)
+					reward = TicTacToe.reward(self.board)
+					if reward is not None:
+						# print(reward)
+						break
+					# print(self)
 
-	def get_players(self):
-		return self.players
+			# log results
+			if reward > 0:
+				if player is self.players[0]:
+					player.wins_first += 1
+					for p in self.players:
+						if p is not player:
+							p.losses_second += 1
+				else:
+					player.wins_second += 1
+					for p in self.players:
+						if p is not player:
+							p.losses_first += 1
+				# print(player.name + ' wins!')
+				# print(self)
+			else:
+				self.players[0].draws_first += 1
+				for p in self.players[1:]:
+					p.draws_second += 1
+				# print('Draw!')
+				# print(self)
 
-	def copy_board(self, board = None):
-		if board == None:
-			board = self.board
+	# def get_players(self):
+	# 	return self.players
+
+	def copy_board(board):
+		# if board == None:
+			# board = self.board
 		return [[sq for sq in row] for row in board]
 
-	def state(self, board = None):
-		if board == None:
-			board = self.copy_board(self.board)
-		return tuple([tuple(row) for row in board])
+	def state(board):
+		# if board == None:
+		# 	board = TicTacToe.copy_board(board)
+		return tuple([tuple(row) for row in TicTacToe.copy_board(board)])
 
 	def reset(self):
-		self.board = self.board = [['*' for c in range(self.size)] for r in range(self.size)]
-		# random.shuffle(self.players)
+		self.board = [['*' for c in range(self.size)] for r in range(self.size)]
+		random.shuffle(self.players)
 
 	def display(self, board = None):
 		if board == None:
@@ -187,7 +216,7 @@ class TicTacToe(object):
 
 	def __str__(self, board = None):
 		if board == None:
-			board = self.copy_board(self.board)
+			board = TicTacToe.copy_board(self.board)
 		# piece to move
 		if flatten(board).count('x') > flatten(board).count('o'):
 			piece = 'o'
