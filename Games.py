@@ -31,37 +31,61 @@ class LiarsDice(object):
 	State: 3-tuple (my_roll, opponent # of dice, opponent previous bid)
 	Actions: 2-tuple bid
 	"""
-	def __init__(self, num_agents, num_opponents, num_dice):
-		self.num_opponents = num_opponents
-		self.num_dice = num_dice
-		self.num_agents = num_agents
-		self.num_players = num_agents + num_opponents
-		self.player_dice_num = [num_dice for _, in self.num_players]
-		self.dice = [np.random.randInt(1,num_dice) for _ in self.num_players]
-		self.turn = np.random.randInt(num_players)
+	def __init__(self, players, dice = 5):
+		# self.num_opponents = num_opponents
+		# self.num_dice = num_dice
+		# self.num_agents = num_agents
+		# self.num_players = num_agents + num_opponents
+		# self.player_dice_num = [num_dice for _, in self.num_players]
+		# self.dice = [np.random.randInt(1,num_dice) for _ in self.num_players]
+		# self.turn = np.random.randInt(num_players)
 
-		self.state = [self.turn, ]
+		self.dice = dice
+		self.players = [[p, self.dice, ()] for p in players]
+		self.PLAYERS = len(self.players)
 
-	def done(self):
-		#########################
-		# should rename to reward
-		#########################
+		# results for this game
+		for player in self.players:
+			player[0].wins_first = 0
+			player[0].wins_second = 0
+			player[0].losses_first = 0
+			player[0].losses_second = 0
+			player[0].draws_first = 0
+			player[0].draws_second = 0
+
+		self.reset()
+
+	def reward(state):
 		pass
 
-	def legal_actions(self):
+	def legal_actions(state):
 		pass
 
-	def step(self, action):
-		nxt_state 
+	def step(state, action):
+		pass
 
 	def play(self):
 		pass
 
-	def display(self):
-		pass
+	def reset(self):
+		for p in players:
+			p[1] = self.dice
+			p[2] = self.roll(self.dice)
+
+	def next_round(self):
+		for p in players:
+			p[2] = self.roll(p[1])
+
+	def display(state):
+		my_roll, opp_dice, prev_bid = state
+		print('Your dice: ' + ' '.join(my_roll))
+		# NOT DONE
 
 	def __str__(self):
 		pass
+
+	def roll(self, dice):
+		return tuple(sorted(random.choice(6) for d in range(dice)))
 		
 class TicTacToe(object):
 
@@ -268,9 +292,6 @@ class HexaPawn(object):
 		# self.players = random.shuffle([agent,opponent])
 
 	def reward(board):
-		###########################################################################################
-		# this needs to be more nuanced because in some of these black wins while others white wins
-		###########################################################################################
 		board = HexaPawn.copy_board(board)
 		size = len(board[0])
 		if any(sq == 'W' for sq in board[0]): # white at the end

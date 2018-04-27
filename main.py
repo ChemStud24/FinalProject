@@ -78,10 +78,10 @@ if __name__ == '__main__':
 	plot_results('Monte Carlo vs. Random Agent',
 		# list(range(GAMES,EPISODES*GAMES+GAMES,GAMES)),
 		playouts,
-		# [wins_first, draws_first, wins_second, draws_second],
-		# ['Wins as X', 'Draws as X', 'Wins as O', 'Draws as O'],
-		[wins,draws,losses],
-		['Wins','Draws','Losses'],
+		[wins_first, wins_second],
+		['Wins as White', 'Wins as Black'],
+		# [wins,draws,losses],
+		# ['Wins','Draws','Losses'],
 		xlabel='Self-Playouts')
 
 	Carlos.save('SlowCarlos.lrn')
