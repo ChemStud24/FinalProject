@@ -55,19 +55,39 @@ class LiarsDice(object):
 
 		self.reset()
 
-	def reward(state):
-		pass
+	def reward(state, game = None):
+		# REWARD called externally
+		if game == None:
+			# evaluate using temporary players
+			# if there is a reward
+			# reset temporary players
+			pass
+		else: # REWARD called internally
+			# give reward for actual game
+			# update number of dice / wins / losses
+			game.next_round()
 
 	def legal_actions(state):
-		pass
+		my_roll, opponent_dice, prev_bid = state
+		max_bid = [len(my_roll) + opponent_dice, 6]
+		return [[quantity, value] for quantity, value in LiarsDice.all_legal_bids(max_bid) if quantity > prev_bid[0] or (quantity == prev_bid[0] and value > prev_bid[1])]
 
-	def step(state, action):
-		pass
+	def step(state, action, game = None):
+		# STEP called externally
+		if game == None:
+			# if temporary players don't exit
+			# create them
+			# step the virtual game
+			pass
+		else: # STEP called internally
+			# step the actual game
+			pass
 
 	def play(self):
 		pass
 
 	def reset(self):
+		LiarsDice.temp_players = None
 		for p in players:
 			p[1] = self.dice
 			p[2] = self.roll(self.dice)
@@ -86,6 +106,14 @@ class LiarsDice(object):
 
 	def roll(self, dice):
 		return tuple(sorted(random.choice(6) for d in range(dice)))
+
+	def all_legal_bids(max_bid):
+		for quantity in range(1,max_bid[0]+1):
+			for value in range(1,6 + 1):
+				bid = [quantity, value]
+				if bid == max_bid:
+					StopIteration
+				yield [quantity, value]
 		
 class TicTacToe(object):
 
