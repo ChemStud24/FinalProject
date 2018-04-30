@@ -26,12 +26,21 @@ import matplotlib.pyplot as plt
 
 class LiarsDice(object):
 
+	'''
+	Liar's Dice
+	'''
+
 	"""docstring for LiarsDice
 
-	State: 3-tuple (my_roll, opponent # of dice, opponent previous bid)
-	Actions: 2-tuple bid
+	State: 3-tuple (my_roll, opponent_dice, prev_bids)
+	where
+	my_roll is a d-tuple of ints where d is the number of dice I have and each int is a die I have
+	opponent_dice is an n-tuple of ints where n is the number of opponents and each int is each opponent's number of dice
+	prev_bids is a b-tuple of bids (2-tuples) where b is the number of previous bids since I last acted
+
+	Actions: 2-tuple bid (quantity, face value) or 'challenge'
 	"""
-	def __init__(self, players, dice = 5):
+	def __init__(self, players, dice = 5, bids = 1):
 		# self.num_opponents = num_opponents
 		# self.num_dice = num_dice
 		# self.num_agents = num_agents
@@ -41,79 +50,171 @@ class LiarsDice(object):
 		# self.turn = np.random.randInt(num_players)
 
 		self.dice = dice
-		self.players = [[p, self.dice, ()] for p in players]
-		self.PLAYERS = len(self.players)
+		# self.players = [{'player' : p, 'dice' : self.dice, 'roll' : ()} for p in players]
+		self.order = [p for p in players]
+		LiarsDice.PLAYERS = len(self.order)
+		LiarsDice.BIDS = min(bids,LiarsDice.PLAYERS-1)
+		
+		self.reset()
 
 		# results for this game
 		for player in self.players:
-			player[0].wins_first = 0
-			player[0].wins_second = 0
-			player[0].losses_first = 0
-			player[0].losses_second = 0
-			player[0].draws_first = 0
-			player[0].draws_second = 0
-
-		self.reset()
+			# player[0].wins_first = 0
+			# player[0].wins_second = 0
+			# player[0].losses_first = 0
+			# player[0].losses_second = 0
+			# player[0].draws_first = 0
+			# player[0].draws_second = 0
+			player.get('player').wins = [0]*LiarsDice.PLAYERS
+			player.get('player').losses = [0]*LiarsDice.PLAYERS
+			player.get('player').draws = [0]*LiarsDice.PLAYERS
 
 	def reward(state, game = None):
+		my_roll, opp_dice, prev_bids = state
+		if prev_bids[-1] is not 'challenge':
+			return None
+
+		bid = prev_bids[-2]
+
 		# REWARD called externally
 		if game == None:
 			# evaluate using temporary players
-			# if there is a reward
+			count = [die for player in LiarsDice.temp_players for die in player.get('roll')].count(bid[1])
+			# return reward
+			if count >= bid[0]:
+				return -1
+			else:
+				return 1
 			# reset temporary players
-			pass
+			LiarsDice.temp_players = None
 		else: # REWARD called internally
+			count = [die for player in game.players for die in player.get('roll')].count(bid[1])
 			# give reward for actual game
-			# update number of dice / wins / losses
+			if count >= bid[0]:
+				# decrement dice
+				game.players[-1]['dice'] -= 1
+				# update losses
+				if game.players[-1].get('dice') == 0:
+					game.players[-1].get('player').losses[game.order.index(game.players[-1].get('player'))] += 1
+				# go back 1 player
+				game.players = [game.players[-1]] + game.players[0:-1]
+			else:
+				# decrement dice
+				game.players[-2]['dice'] -= 1
+				# update losses
+				if game.players[-1].get('dice') == 0:
+					game.players[-1].get('player').losses[game.order.index(game.players[-1].get('player'))] += 1
+				# go back 2 players
+				game.players = game.players[-2:] + game.players[0:-2]
+			# eliminate players with no dice
+			game.players = [p for p in game.players if p.get('dice') > 0]
+			# check if someone won
+			# if len(game.players) == 1:
+			# 	game.players[-1].get('player').wins[game.order.index(game.players[-1].get('player'))] += 1
+			# 	return 1
+			# else:
+			# 	game.next_round()
 			game.next_round()
+			return 1
 
 	def legal_actions(state):
-		my_roll, opponent_dice, prev_bid = state
-		max_bid = [len(my_roll) + opponent_dice, 6]
-		return [[quantity, value] for quantity, value in LiarsDice.all_legal_bids(max_bid) if quantity > prev_bid[0] or (quantity == prev_bid[0] and value > prev_bid[1])]
+		my_roll, opponent_dice, prev_bids = state
+		max_bid = [len(my_roll) + sum(opponent_dice), 6]
+		
+		if prev_bids == ():
+			return [(quantity, value) for quantity, value in LiarsDice.all_legal_bids(max_bid)]
+		else:
+			return [(quantity, value) for quantity, value in LiarsDice.all_legal_bids(max_bid) if quantity > prev_bids[-1][0] or (quantity == prev_bids[-1][0] and value > prev_bids[-1][1])] + ['challenge']
 
 	def step(state, action, game = None):
+		my_roll, opp_dice, prev_bids = state
+		# print('PREV BIDS',prev_bids)
 		# STEP called externally
 		if game == None:
-			# if temporary players don't exit
-			# create them
+			# if temporary players don't exist
+			if LiarsDice.temp_players == None:
+				# create them
+				LiarsDice.temp_players = [{'roll' : my_roll, 'dice' : len(my_roll)}] + [{'roll' : LiarsDice.roll(dice), 'dice' : dice} for dice in opp_dice]
 			# step the virtual game
-			pass
+			# change turn
+			LiarsDice.temp_players = LiarsDice.temp_players[1:] + [LiarsDice.temp_players[0]]
+			my_roll = LiarsDice.temp_players[0].get('roll')
+			opp_dice = tuple(player.get('dice') for player in LiarsDice.temp_players[1:])
+			if action == 'challenge':
+				return (my_roll, opp_dice, prev_bids + (action,))
+			prev_bids += (action,)
+			return (my_roll, opp_dice, prev_bids[-LiarsDice.BIDS:])
 		else: # STEP called internally
-			# step the actual game
-			pass
+			# step the actual game 
+			# change turn
+			game.players = game.players[1:] + [game.players[0]]
+			my_roll = game.players[0].get('roll')
+			opp_dice = tuple(player.get('dice') for player in game.players[1:])
+			if action is 'challenge':
+				return (my_roll, opp_dice, prev_bids + (action,))
+			elif prev_bids == ():
+				prev_bids = (action,)
+			else:
+				prev_bids += (action,)
+			return (my_roll, opp_dice, prev_bids[-LiarsDice.BIDS:])
 
-	def play(self):
-		pass
+	def play(self, games = 1):
+		for g in range(games):
+			self.reset()
+
+			while len(self.players) > 1:
+
+				# inital state
+				my_roll = self.players[0].get('roll')
+				opp_dice = tuple(player.get('dice') for player in self.players[1:])
+				prev_bids = ()
+				state = (my_roll, opp_dice, prev_bids)
+				# print(state)
+
+				reward = None
+				while reward is None:
+					action = self.players[0].get('player').action(state)
+					state = LiarsDice.step(state,action,self)
+					reward = LiarsDice.reward(state,self)
+
+			self.players[-1].get('player').wins[self.order.index(self.players[-1].get('player'))] += 1
+			print(self.players[-1].get('player').name + ' wins!')
 
 	def reset(self):
+		random.shuffle(self.order)
+		self.players = [{'player' : p, 'dice' : self.dice, 'roll' : LiarsDice.roll(self.dice)} for p in self.order]
 		LiarsDice.temp_players = None
-		for p in players:
-			p[1] = self.dice
-			p[2] = self.roll(self.dice)
+		# for p in self.order:
+		# 	p['dice'] = self.dice
+		# 	p['roll'] = self.roll(self.dice)
 
 	def next_round(self):
-		for p in players:
-			p[2] = self.roll(p[1])
+		for p in self.players:
+			p['roll'] = LiarsDice.roll(p.get('dice'))
 
 	def display(state):
-		my_roll, opp_dice, prev_bid = state
-		print('Your dice: ' + ' '.join(my_roll))
-		# NOT DONE
+		my_roll, opp_dice, prev_bids = state
+		print('\nYour dice: ' + ' '.join(str(r) for r in my_roll))
+		print('\nOpponents:')
+		for i in range(len(opp_dice)):
+			if i >= len(opp_dice) - len(prev_bids):
+				print('Dice:',opp_dice[i],'Bid:',prev_bids[i - (len(opp_dice) - len(prev_bids))])
+			else:
+				print('Dice:',opp_dice[i])
 
 	def __str__(self):
 		pass
 
-	def roll(self, dice):
-		return tuple(sorted(random.choice(6) for d in range(dice)))
+	def roll(dice):
+		return tuple(sorted(random.choice(range(1,6+1)) for d in range(dice)))
 
 	def all_legal_bids(max_bid):
 		for quantity in range(1,max_bid[0]+1):
 			for value in range(1,6 + 1):
-				bid = [quantity, value]
+				bid = (quantity, value)
 				if bid == max_bid:
 					StopIteration
-				yield [quantity, value]
+				yield (quantity, value)
 		
 class TicTacToe(object):
 

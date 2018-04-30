@@ -63,6 +63,7 @@ class Learner(object):
 				if any(s2 not in Learner.TREE.keys() for s2,_ in followers):
 					action = random.choice([a for s2,a in followers if s2 not in Learner.TREE.keys()])
 				else:
+					print('Followers',followers)
 					action = max((self.minUCT(s2),a) for s2,a in followers)[1]
 				visited.append((s,turn))
 				s = self.game.step(s, action)
@@ -252,12 +253,15 @@ class Human(object):
 
 	def action(self, state):
 		self.game.display(state)
-		alpha = string.ascii_lowercase
-		legals = {alpha[i] : a for i,a in enumerate(self.game.legal_actions(state))}
+		alpha = string.ascii_lowercase + string.ascii_uppercase
+		# legals = {alpha[i] : a for i,a in enumerate(self.game.legal_actions(state))}
+		# print('STATE:',state)
+		legals = {str(a) : a for a in self.game.legal_actions(state)}
 		action = None
 		while action not in legals.keys():
-			print('Legal Actions:')
-			print('\n'.join([str(i) + ': ' + str(a) for i,a in legals.items()]))
+			print('\nLegal Actions:')
+			# print('\n'.join([str(i) + ': ' + str(a) for i,a in legals.items()]))
+			print('\n'.join(['--> ' + str(a) for _,a in legals.items()]))
 			action = input('What is your move?\n')
 			if action == 'help':
 				print(self.game.__doc__)
