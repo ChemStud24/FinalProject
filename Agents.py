@@ -6,6 +6,7 @@ import datetime
 import pickle
 from math import log, sqrt
 import string
+from operator import itemgetter
 
 
 class RandomAgent(object):
@@ -47,7 +48,7 @@ class Learner(object):
 		if all(s2 not in Learner.TREE.keys() for s2,_ in followers):
 			return random.choice([a for s2,a in followers if s2 not in Learner.TREE.keys()])
 		else:
-			return max((self.minwin(s2),a) for s2,a in followers if s2 in Learner.TREE.keys())[1]
+			return max(((self.minwin(s2),a) for s2,a in followers if s2 in Learner.TREE.keys()),key=itemgetter(0))[1]
 
 	def think(self, state):
 		players = self.game.PLAYERS
@@ -63,8 +64,16 @@ class Learner(object):
 				if any(s2 not in Learner.TREE.keys() for s2,_ in followers):
 					action = random.choice([a for s2,a in followers if s2 not in Learner.TREE.keys()])
 				else:
-					print('Followers',followers)
-					action = max((self.minUCT(s2),a) for s2,a in followers)[1]
+					# print('Followers',followers)
+					# maxx = -float('inf')
+					# for s2,a in followers:
+					# 	print(s2,a)
+					# 	UCT = self.minUCT(s2)
+					# 	print(UCT)
+					# 	if UCT > maxx:
+					# 		maxx = UCT
+					# 		action = a
+					action = max(((self.minUCT(s2),a) for s2,a in followers),key=itemgetter(0))[1]
 				visited.append((s,turn))
 				s = self.game.step(s, action)
 				reward = self.game.reward(s)

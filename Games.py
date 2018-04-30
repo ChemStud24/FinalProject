@@ -2,6 +2,7 @@ import numpy as np
 import random
 import pickle
 import matplotlib.pyplot as plt
+from Agents import Learner
 
 
 # ========= State Space =========
@@ -40,7 +41,7 @@ class LiarsDice(object):
 
 	Actions: 2-tuple bid (quantity, face value) or 'challenge'
 	"""
-	def __init__(self, players, dice = 5, bids = 1):
+	def __init__(self, players, dice = 5, bids = 1, virtual_number = 10):
 		# self.num_opponents = num_opponents
 		# self.num_dice = num_dice
 		# self.num_agents = num_agents
@@ -48,6 +49,13 @@ class LiarsDice(object):
 		# self.player_dice_num = [num_dice for _, in self.num_players]
 		# self.dice = [np.random.randInt(1,num_dice) for _ in self.num_players]
 		# self.turn = np.random.randInt(num_players)
+
+		for p in players:
+			if type(p) == Learner:
+				LiarsDice.virtual_number = max(p.playouts / 100,virtual_number)
+			else:
+				LiarsDice.virtual_number = virtual_number
+
 
 		self.dice = dice
 		# self.players = [{'player' : p, 'dice' : self.dice, 'roll' : ()} for p in players]
@@ -80,13 +88,16 @@ class LiarsDice(object):
 		if game == None:
 			# evaluate using temporary players
 			count = [die for player in LiarsDice.temp_players for die in player.get('roll')].count(bid[1])
+			# every so often
+			LiarsDice.temp_count += 1
+			if LiarsDice.temp_count >= LiarsDice.virtual_number:
+				# reset temporary players
+				LiarsDice.temp_players = None
 			# return reward
 			if count >= bid[0]:
 				return -1
 			else:
 				return 1
-			# reset temporary players
-			LiarsDice.temp_players = None
 		else: # REWARD called internally
 			count = [die for player in game.players for die in player.get('roll')].count(bid[1])
 			# give reward for actual game
@@ -120,7 +131,7 @@ class LiarsDice(object):
 	def legal_actions(state):
 		my_roll, opponent_dice, prev_bids = state
 		max_bid = [len(my_roll) + sum(opponent_dice), 6]
-		
+
 		if prev_bids == ():
 			return [(quantity, value) for quantity, value in LiarsDice.all_legal_bids(max_bid)]
 		else:
@@ -131,13 +142,24 @@ class LiarsDice(object):
 		# print('PREV BIDS',prev_bids)
 		# STEP called externally
 		if game == None:
-			# if temporary players don't exist
-			if LiarsDice.temp_players == None:
+			# if temporary players don't exist or my_roll isn't in the temporary players
+			# print(str(LiarsDice.temp_players))
+			if LiarsDice.temp_players == None or all(p.get('roll') is not my_roll for p in LiarsDice.temp_players):
 				# create them
+				# print('created new players')
 				LiarsDice.temp_players = [{'roll' : my_roll, 'dice' : len(my_roll)}] + [{'roll' : LiarsDice.roll(dice), 'dice' : dice} for dice in opp_dice]
+				LiarsDice.temp_count = 0
 			# step the virtual game
+			# find turn
+			turn = next(i for i,p in enumerate(LiarsDice.temp_players) if p.get('roll') is my_roll)
 			# change turn
-			LiarsDice.temp_players = LiarsDice.temp_players[1:] + [LiarsDice.temp_players[0]]
+			turn += 1
+			turn %= LiarsDice.PLAYERS
+			# print('turn:',turn)
+			# LiarsDice.temp_players = LiarsDice.temp_players[1:] + [LiarsDice.temp_players[0]]
+			# change order
+			LiarsDice.temp_players = LiarsDice.temp_players[turn:] + LiarsDice.temp_players[0:turn]
+			# next state
 			my_roll = LiarsDice.temp_players[0].get('roll')
 			opp_dice = tuple(player.get('dice') for player in LiarsDice.temp_players[1:])
 			if action == 'challenge':
@@ -160,6 +182,7 @@ class LiarsDice(object):
 
 	def play(self, games = 1):
 		for g in range(games):
+			print('Game',g)
 			self.reset()
 
 			while len(self.players) > 1:
@@ -189,6 +212,7 @@ class LiarsDice(object):
 		# 	p['roll'] = self.roll(self.dice)
 
 	def next_round(self):
+		LiarsDice.temp_players = None
 		for p in self.players:
 			p['roll'] = LiarsDice.roll(p.get('dice'))
 

@@ -34,15 +34,16 @@ def plot_results(title,games,statistics,names,xlabel = 'Games Played'):
 
 if __name__ == '__main__':
 
-	GAMES = 4
-	EPISODES = 50
-	SIZE = 3
+	GAMES = 10
+	EPISODES = 1000
+	SIZE = 5
 
-	Carlos = Learner(HexaPawn, playouts = 5)
-	players = [Carlos, RandomAgent(HexaPawn)]
-	game = HexaPawn(players, size = SIZE)
+	Carlos = Learner(LiarsDice, playouts = 10000)
+	Diego = Learner(LiarsDice, playouts = 10000)
+	players = [Carlos, Diego] #RandomAgent(HexaPawn)]
+	game = LiarsDice(players, dice = SIZE)
 
-	wins_first, draws_first, losses_first, wins_second, losses_second, draws_second = [],[],[],[],[],[]
+	# wins_first, draws_first, losses_first, wins_second, losses_second, draws_second = [],[],[],[],[],[]
 	wins,losses,draws = [],[],[]
 	playouts = []
 
@@ -53,17 +54,23 @@ if __name__ == '__main__':
 
 		game.play(GAMES)
 
-		wins_first.append(Carlos.wins_first)
-		draws_first.append(Carlos.draws_first)
-		losses_first.append(Carlos.losses_first)
-		wins_second.append(Carlos.wins_second)
-		draws_second.append(Carlos.draws_second)
-		losses_second.append(Carlos.losses_second)
+		Carlos.save('Liar.lrn')
 
-		wins.append(wins_first[-1] + wins_second[-1])
-		losses.append(losses_first[-1] + losses_second[-1])
-		draws.append(draws_first[-1] + draws_second[-1])
+		# wins_first.append(Carlos.wins_first)
+		# draws_first.append(Carlos.draws_first)
+		# losses_first.append(Carlos.losses_first)
+		# wins_second.append(Carlos.wins_second)
+		# draws_second.append(Carlos.draws_second)
+		# losses_second.append(Carlos.losses_second)
+
+		# wins.append(wins_first[-1] + wins_second[-1])
+		# losses.append(losses_first[-1] + losses_second[-1])
+		# draws.append(draws_first[-1] + draws_second[-1])
 		playouts.append(Carlos.PLAYS)
+
+		wins.append(Carlos.wins)
+		draws.append(Carlos.draws)
+		losses.append(Carlos.losses)
 
 		print('\nProgress:')
 		print('Playouts:',Carlos.PLAYS)
@@ -71,20 +78,25 @@ if __name__ == '__main__':
 		print('Unique States Visited:',len(Carlos.TREE.keys()))
 
 		print('\nReults:')
-		print('Wins:', wins_first[-1] + wins_second[-1])
-		print('Losses:',losses_first[-1] + losses_second[-1])
-		print('Draws:',draws_first[-1] + draws_second[-1])
+		# print('Wins:', wins_first[-1] + wins_second[-1])
+		# print('Losses:',losses_first[-1] + losses_second[-1])
+		# print('Draws:',draws_first[-1] + draws_second[-1])
 
-	plot_results('Monte Carlo vs. Random Agent',
-		# list(range(GAMES,EPISODES*GAMES+GAMES,GAMES)),
-		playouts,
-		[wins_first, wins_second],
-		['Wins as White', 'Wins as Black'],
+		print('Wins:', sum(wins[-1]))
+		print('Losses:', sum(losses[-1]))
+		print('Draws:', sum(draws))
+
+	plot_results('Monte Carlo vs. Monte Carlo',
+		list(range(GAMES,EPISODES*GAMES+GAMES,GAMES)),
+		# playouts,
+		[[w[0] for w in wins], [w[1] for w in wins]],
+		['Wins going first', 'Wins going second'],
 		# [wins,draws,losses],
 		# ['Wins','Draws','Losses'],
-		xlabel='Self-Playouts')
+		# xlabel='Self-Playouts')
+		)
 
-	Carlos.save('SlowCarlos.lrn')
+	# Carlos.save('Liar.lrn')
 
 
 	# num_games = 50
