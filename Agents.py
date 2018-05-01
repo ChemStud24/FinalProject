@@ -101,6 +101,7 @@ class Learner(object):
 	def save(self, filename):
 		Learner.TREE['plays'] = Learner.PLAYS
 		pickle.dump(Learner.TREE,open(filename,'wb'))
+		Learner.TREE.pop('plays')
 
 	def load(self, filename):
 		Learner.TREE = pickle.load(open(filename,'rb'))

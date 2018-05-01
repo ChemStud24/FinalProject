@@ -40,6 +40,7 @@ if __name__ == '__main__':
 
 	Carlos = Learner(LiarsDice, playouts = 10000)
 	Diego = Learner(LiarsDice, playouts = 10000)
+	Carlos.load('Liar.lrn')
 	players = [Carlos, Diego] #RandomAgent(HexaPawn)]
 	game = LiarsDice(players, dice = SIZE)
 
@@ -84,7 +85,7 @@ if __name__ == '__main__':
 
 		print('Wins:', sum(wins[-1]))
 		print('Losses:', sum(losses[-1]))
-		print('Draws:', sum(draws))
+		print('Draws:', sum(draws[-1]))
 
 	plot_results('Monte Carlo vs. Monte Carlo',
 		list(range(GAMES,EPISODES*GAMES+GAMES,GAMES)),
